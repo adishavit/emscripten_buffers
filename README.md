@@ -9,3 +9,5 @@ Here are some of them with some minimal profiling code.
 2. Run `./build.sh`
 3. Open `index.html` in your browser.
 4. Check the browser developer console to see the results.
+
+Alternatively, see it [live here](https://adishavit.github.io/emscripten_buffers/) (the page appears blank, open console to see results).
