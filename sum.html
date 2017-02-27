@@ -22,6 +22,8 @@
     measure('C sum_c:                 ', function(){ return Module.sum_c(uint8Array); });
     measure('sum_str_cpy:             ', function(){ return Module.sum_str_cpy(uint8Array); });
     measure('sum_str_ref:             ', function(){ return Module.sum_str(uint8Array); });
+    measure('sum_str_cpy, buffer:     ', function(){ return Module.sum_str_cpy(uint8Array.buffer); });
+    measure('sum_str_ref, buffer:     ', function(){ return Module.sum_str(uint8Array.buffer); });
 
     ///////////////////////////////////////////////////////////////////////////
 
