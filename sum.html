@@ -1,0 +1,49 @@
+<!doctype html>
+<html>
+  <script src="sum.js"></script>
+  <script>
+
+    function measure(label, fun)
+    {
+      var ITER = 300;
+      var res = 0;
+      var _start = performance.now();
+      for (var i=0; i<ITER; ++i)
+        res = fun();
+      var _end = performance.now();
+      console.log(label, Math.round(_end - _start), 'ms ', res);
+    }
+
+    var uint8Array = new Uint8Array(1000000);
+    uint8Array.fill(1);
+
+    measure('C sum:                   ', function(){ return Module.ccall('sum', 'number',['array','number'], [uint8Array, uint8Array.length]); });
+    measure('C sum, buffer:           ', function(){ return Module.ccall('sum', 'number',['array','number'], [uint8Array.buffer, uint8Array.length]); });
+    measure('C sum_c:                 ', function(){ return Module.sum_c(uint8Array); });
+    measure('sum_str_cpy:             ', function(){ return Module.sum_str_cpy(uint8Array); });
+    measure('sum_str_ref:             ', function(){ return Module.sum_str(uint8Array); });
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    function _arrayToHeap(typedArray){
+      var numBytes = typedArray.length * typedArray.BYTES_PER_ELEMENT;
+      var ptr = Module._malloc(numBytes);
+      var heapBytes = Module.HEAPU8.subarray(ptr, ptr + numBytes);
+      heapBytes.set(typedArray);
+      return heapBytes;
+    }
+
+    function _freeArray(heapBytes){
+      Module._free(heapBytes.byteOffset);
+    }
+
+    var heapBytes = _arrayToHeap(uint8Array);
+
+    measure('C sum heapBytes:         ', function(){ return Module.ccall('sum', 'number',['array','number'], [heapBytes, heapBytes.length]); });
+    measure('C sum heapBytes.buffer:  ', function(){ return Module.ccall('sum', 'number',['array','number'], [heapBytes.buffer, heapBytes.length]);});
+    measure('C sum_c heapBytes.buffer:', function(){ return Module.sum_c(heapBytes); });
+
+    _freeArray(heapBytes);
+
+  </script>
+</html>
