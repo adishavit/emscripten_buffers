@@ -5,7 +5,7 @@
 
     function measure(label, fun)
     {
-      var ITER = 300;
+      var ITER = 100;
       var res = 0;
       var _start = performance.now();
       for (var i=0; i<ITER; ++i)
@@ -16,14 +16,8 @@
 
     var uint8Array = new Uint8Array(1000000);
     uint8Array.fill(1);
+    uint8Array[0] += 1;
 
-    measure('C sum:                   ', function(){ return Module.ccall('sum', 'number',['array','number'], [uint8Array, uint8Array.length]); });
-    measure('C sum, buffer:           ', function(){ return Module.ccall('sum', 'number',['array','number'], [uint8Array.buffer, uint8Array.length]); });
-    measure('C sum_c:                 ', function(){ return Module.sum_c(uint8Array); });
-    measure('sum_str_cpy:             ', function(){ return Module.sum_str_cpy(uint8Array); });
-    measure('sum_str_ref:             ', function(){ return Module.sum_str(uint8Array); });
-    measure('sum_str_cpy, buffer:     ', function(){ return Module.sum_str_cpy(uint8Array.buffer); });
-    measure('sum_str_ref, buffer:     ', function(){ return Module.sum_str(uint8Array.buffer); });
 
     ///////////////////////////////////////////////////////////////////////////
 
@@ -32,20 +26,43 @@
       var ptr = Module._malloc(numBytes);
       var heapBytes = Module.HEAPU8.subarray(ptr, ptr + numBytes);
       heapBytes.set(typedArray);
-      return heapBytes;
+      return { heapBytes: heapBytes, ptr: ptr };
     }
 
     function _freeArray(heapBytes){
       Module._free(heapBytes.byteOffset);
     }
 
-    var heapBytes = _arrayToHeap(uint8Array);
+    var heapData =  _arrayToHeap(uint8Array);
+    var heapBytes = heapData.heapBytes;
+    var heapPtr = heapData.ptr;
 
-    measure('C sum heapBytes:         ', function(){ return Module.ccall('sum', 'number',['array','number'], [heapBytes, heapBytes.length]); });
-    measure('C sum heapBytes.buffer:  ', function(){ return Module.ccall('sum', 'number',['array','number'], [heapBytes.buffer, heapBytes.length]);});
-    measure('C sum_c heapBytes.buffer:', function(){ return Module.sum_c(heapBytes); });
+    for (var l = 0; l<5; ++l) {
+
+      measure('01: C sum:                   ', function(){ return Module.ccall('sum', 'number',['array','number'], [uint8Array, uint8Array.length]); });
+      measure('02: C sum, buffer:           ', function(){ return Module.ccall('sum', 'number',['array','number'], [uint8Array.buffer, uint8Array.length]); });
+      measure('03: C sum_c:                 ', function(){ return Module.sum_c(uint8Array); });
+
+      measure('04: sum_str_cpy:             ', function(){ return Module.sum_str_cpy(uint8Array); });
+      measure('05: sum_str_ref:             ', function(){ return Module.sum_str(uint8Array); });
+      measure('06: sum_str_cpy, buffer:     ', function(){ return Module.sum_str_cpy(uint8Array.buffer); });
+      measure('07: sum_str_ref, buffer:     ', function(){ return Module.sum_str(uint8Array.buffer); });
+
+      measure('08: C sum heapBytes:         ', function(){ return Module.ccall('sum', 'number',['array','number'], [heapBytes, heapBytes.length]); });
+      measure('09: C sum heapBytes.buffer:  ', function(){ return Module.ccall('sum', 'number',['array','number'], [heapBytes.buffer, heapBytes.length]);});
+      measure('10: C sum_c heapBytes.buffer:', function(){ return Module.sum_c(heapBytes); });
+
+      // direct call
+      measure('11: direct asm.js call:       ', function(){ return Module._sum(heapPtr, uint8Array.length); });
+
+      console.log('=-=-=-=-=-==-=-=-');
+
+  }
+
+
 
     _freeArray(heapBytes);
+
 
   </script>
 </html>
